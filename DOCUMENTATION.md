@@ -64,11 +64,6 @@ const resolver = async function (_, args, ctx) {
     name: 1,
     downloadUrl: 1,
   });
-
-  // At this step the file has already been uploaded to S3 stored in `fileUploadKey` path
-  media.key = fileUploadKey;
-
-  // save media
 };
 ```
 
@@ -87,6 +82,9 @@ type User {
 ```graphql
 query me {
   avatar {
+    """
+    Keep in mind that you should do a Nova query in your resolver if you want this to work as downloadUrl is a reducer.
+    """
     downloadUrl
   }
 }
@@ -135,14 +133,10 @@ If for example you have a "place" where you upload more files. For example, a `C
 Files get deleted when `appFiles` get deleted by `_id`. This is done because of security and performance concerns.
 
 ```ts
-appFilesCollection.deleteOne({ _id: mediaId });
+appFilesCollection.deleteOne({ _id: appFileId });
 ```
 
-This will automatically delete it from the S3 as well. This is handled in `MediaListener` via a `BeforeRemoveEvent` for the documents.
-
-### Downloadable URLs
-
-Using it on the client for fetching the url you just get `fullUrl` from `Media` GraphQL entity. `fullUrl` is an actual reducer that uses `UploadService` to get the url by key. The url is derived from the endpoint variable.
+This will automatically delete it from the S3 as well. This is handled in `AppFileListener` via a `BeforeRemoveEvent` for the documents.
 
 ### Customisation
 
