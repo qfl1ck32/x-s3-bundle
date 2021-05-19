@@ -4,6 +4,10 @@ We are using [Apollo Upload scalar](https://www.apollographql.com/docs/apollo-se
 
 ## Setup
 
+```bash
+npm i -S graphql-upload aws-sdk
+```
+
 ```ts
 kernel.addBundle(
   new XS3Bundle({
@@ -17,7 +21,7 @@ kernel.addBundle(
 );
 ```
 
-Or if you have them already in your `.env` files, no need to be specified in bundle configuration:
+Or if you have them already in your `.env` files, no need to be specified in bundle configuration when adding it to kernel:
 
 ```ts
 accessKeyId: process.env.AWS_S3_KEY_ID,

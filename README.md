@@ -1,11 +1,11 @@
 <h1 align="center">KAVIAR SECURITY-MONGO-BUNDLE</h1>
 
 <p align="center">
-  <a href="https://travis-ci.org/kaviarjs/x-uploads-bundle">
-    <img src="https://api.travis-ci.org/kaviarjs/x-uploads-bundle.svg?branch=master" />
+  <a href="https://travis-ci.org/kaviarjs/x-s3-bundle">
+    <img src="https://api.travis-ci.org/kaviarjs/x-s3-bundle.svg?branch=master" />
   </a>
-  <a href="https://coveralls.io/github/kaviarjs/x-uploads-bundle?branch=master">
-    <img src="https://coveralls.io/repos/github/kaviarjs/x-uploads-bundle/badge.svg?branch=master" />
+  <a href="https://coveralls.io/github/kaviarjs/x-s3-bundle?branch=master">
+    <img src="https://coveralls.io/repos/github/kaviarjs/x-s3-bundle/badge.svg?branch=master" />
   </a>
 </p>
 
@@ -14,7 +14,7 @@ This represents the way of handling file uploads.
 ## Install
 
 ```bash
-npm install --save @kaviar/x-uploads-bundle
+npm install --save @kaviar/x-s3-bundle
 ```
 
 ## [Documentation](./DOCUMENTATION.md)
