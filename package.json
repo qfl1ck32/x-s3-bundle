@@ -1,7 +1,7 @@
 {
-  "name": "@kaviar/x-uploads-bundle",
+  "name": "@kaviar/x-s3-bundle",
   "version": "1.0.0",
-  "description": "Kaviar X-Uploads",
+  "description": "This bundle allows you easily upload files to AWS S3",
   "main": "dist/index.js",
   "repository": {
     "type": "git",
