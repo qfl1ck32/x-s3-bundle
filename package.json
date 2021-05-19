@@ -21,23 +21,36 @@
     "prepublishOnly": "npm run compile",
     "gen-doc": "typedoc ./src/index.ts --exclude ./src/__tests__ --out typeDocs --tsconfig tsconfig.json"
   },
-  "dependencies": {},
-  "devDependencies": {
+  "peerDependencies": {
+    "@kaviar/apollo-bundle": "^1.0.2",
+    "@kaviar/core": "^1.1.3",
     "@kaviar/graphql-bundle": "^1.1.1",
+    "@kaviar/logger-bundle": "^1.0.2",
+    "@kaviar/mongo-bundle": "^1.1.3",
+    "@kaviar/security-bundle": "^1.0.2"
+  },
+  "devDependencies": {
+    "@kaviar/apollo-bundle": "^1.0.2",
+    "@kaviar/core": "^1.1.3",
+    "@kaviar/ejson": "^1.2.7",
+    "@kaviar/graphql-bundle": "^1.1.1",
+    "@kaviar/logger-bundle": "^1.0.0",
     "@kaviar/mongo-bundle": "^1.1.3",
     "@kaviar/security-bundle": "^1.0.2",
-    "@kaviar/x-bundle": "^1.4.0",
     "@types/graphql": "^0.11.3",
     "@types/jest": "^26.0.0",
-    "@types/node": "^8.0.28",
+    "@types/node": "^8.10.66",
     "@typescript-eslint/eslint-plugin": "2.3.0",
     "@typescript-eslint/parser": "2.3.0",
+    "aws-sdk": "^2.909.0",
     "eslint": "^6.6.0",
     "eslint-config-prettier": "6.3.0",
     "eslint-plugin-prettier": "3.1.1",
     "jest": "^26.0.0",
     "jest-junit": "^10.0.0",
+    "moment": "^2.29.1",
     "prettier": "^2.0.5",
+    "shortid": "^2.2.16",
     "source-map-support": "^0.5.13",
     "typescript": "^4.0.2"
   },
@@ -45,5 +58,8 @@
   "typescript": {
     "definition": "dist/index.d.ts"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "graphql-upload": "^11.0.0"
+  }
 }

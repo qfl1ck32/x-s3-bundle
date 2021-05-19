@@ -3,15 +3,12 @@ import { IUser } from "@kaviar/security-bundle";
 
 export class AppFile {
   _id: ObjectID;
-  storeId: string;
   name: string;
   path: string;
   size: number;
   mimeType: string;
-  /**
-   * Applies to images only: Width, Height
-   */
-  dimension?: [number, number];
+
+  metadata: object;
 
   /**
    * To have a generic way of linking data
@@ -25,5 +22,5 @@ export class AppFile {
   /**
    * @reducer
    */
-  downloadPath: string;
+  downloadUrl: string;
 }

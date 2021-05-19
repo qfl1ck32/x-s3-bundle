@@ -3,13 +3,16 @@ export default /* GraphQL */ `
     _id: ID!
     name: String
     path: String!
-    fullPath: String!
+    downloadUrl: String!
     size: Int!
     mimeType: String!
+
     resourceType: String
     resourceId: String
-    userId: String
-    user: User
+
+    uploadedById: String
+    uploadedBy: User
+
     createdAt: Date
     updatedAt: Date
     createdBy: User

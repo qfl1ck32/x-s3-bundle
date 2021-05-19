@@ -1,124 +1,155 @@
-## To Do
+S3Upload bundle allows you to easily upload files to Amazon S3 by helping you upload files, storing metadata about the files in a separate collection `AppFiles` and providing resolvers to download the urls.
 
-We are using [Apollo Upload scalar](https://www.apollographql.com/docs/apollo-server/data/file-uploads/) to transfer the files through the GraphQL API
+We are using [Apollo Upload scalar](https://www.apollographql.com/docs/apollo-server/data/file-uploads/) to transfer the files through the GraphQL API.
 
-## Install
+## Setup
 
 ```ts
-new XUploadsBundle();
+kernel.addBundle(
+  new XS3Bundle({
+    accessKeyId: "xxx",
+    secretAccessKey: "xxx",
+    bucket: "xxx",
+    region: "eu-west-2",
+    // used to generate the download path
+    endpoint: "https://s3/",
+  })
+);
 ```
 
-## Upload Files
+Or if you have them already in your `.env` files, no need to be specified in bundle configuration:
 
 ```ts
-class AppFileStore extends LocalFileStore {
-  constructor() {
-    this.setup({
-      // Default Path: os.tmpDir() + '/uploads';
-      path: "",
-      // From where would we download the file
-      // Default works like this: {ROOT_URL}/files/fileName.jpg
-      downloadPath(appUpload) {
-        return "";
-      },
-    });
-  }
-
-  getStoreId() {
-    return "local";
-  }
-}
+accessKeyId: process.env.AWS_S3_KEY_ID,
+secretAccessKey: process.env.AWS_S3_SECRET,
+endpoint: process.env.AWS_S3_ENDPOINT,
+region: process.env.AWS_S3_REGION,
+bucket: process.env.AWS_S3_BUCKET,
 ```
 
-```ts
-const fileStore = container.get(AppFileStore);
+### Uploading in Resolvers
 
-const typeDefs = `
+```ts
+import { S3UploadService, AppFilesCollection } from "@kaviar/x-s3-bundle";
+
+const types = `
   type Mutation {
-    uploadAvatar(file: Upload!): Boolean
+    upload(file: Upload): Boolean
   }
 `;
-const resolvers = {
-  Mutation: {
-    async uploadAvatar(_, args, ctx) {
-      // This will create a new document inside AppFilesCollection
-      const appFileId = await fileStore.handleUpload(args.file);
 
-      // Update avatarId for current user ctx.userId
+const resolver = async function (_, args, ctx) {
+  // The file is the GQL Upload Scalar
+  const { file } = args;
+
+  const s3Upload = ctx.container.get(S3UploadService);
+  const appFile = await uploadService.upload(file, {
+    resourceType: "avatar",
+    uploadedById: ctx.userId,
+  });
+
+  // At this step appFile has been already uploaded to S3. You can fetch the download url:
+  const url = s3Upload.getUrl(appFile.path);
+
+  // Or via Nova as we have the `downloadUrl` reducer to help you in this regard
+  const appFiles = ctx.container.get(AppFilesCollection);
+  const appFile = appFiles.queryOne({
+    $: {
+      filters: { _id: appFile.id },
     },
-  },
+    name: 1,
+    downloadUrl: 1,
+  });
+
+  // At this step the file has already been uploaded to S3 stored in `fileUploadKey` path
+  media.key = fileUploadKey;
+
+  // save media
 };
 ```
 
-You can also perform deletion and fetching:
+## How it works
+
+Basically you'll have a bunch of entities linked with files through `Nova` linking with `AppFilesCollection`. For example, an User has an avatar:
+
+In GraphQL typing it will look something like this:
 
 ```ts
-await fileStore.delete(path); // deletes the file from the store
-await fileStore.fetch(path); // returns Buffer
-```
-
-## S3
-
-```ts
-class AppFileStore extends S3FileStore {
-  constructor(
-    // You can store these parameters in your main AppBundle in prepare()
-    @Inject("%AWS_S3_ACCESS_KEY_ID%") accessKeyId: string,
-    @Inject("%AWS_S3_SECRET_ACCESS_KEY%") secretAccessKey: string,
-    @Inject("%AWS_S3_REGION%") region: string,
-    @Inject("%AWS_S3_BUCKET%") region: string,
-  ) {
-    this.setup({
-      accessKeyId,
-      secretAccessKey
-      region,
-      bucket,
-    });
-  }
-
-  getStoreId() {
-    return "s3-default";
-  }
-}
-```
-
-## Downloading Files
-
-When files are situated locally, you have to provide an endpoint that would download this file. We strongly recommend to do this at a "higher than node" level. Node is not very efficient for file streaming.
-
-```ts
-class AppBundle extends Bundle {
-  prepare() {
-    this.setupDownloadRoute();
-  }
-
-  setupDownloadRoute() {
-    const apolloBundle = this.container.get(ApolloBundle);
-    apolloBundle.addRoute("/files/:file", async ({ params }) {
-      // Fetch it from the path and serve it.
-    })
-  }
-}
-```
-
-## Getting file path
-
-```graphql
 type User {
-  # ...
   avatar: AppFile
 }
 ```
 
-```ts
-query {
-  user {
-    avatar {
-      filePath
-    }
+```graphql
+query me {
+  avatar {
+    downloadUrl
   }
 }
 ```
 
-## Multiple stores
+When adding the avatar, after uploading it can look something like this:
 
+```ts
+import { AppFilesCollection } from "@kaviar/x-s3-bundle";
+
+// Sample of linking of files
+class UsersCollection extends Collection {
+  static links = {
+    avatar: {
+      collection: () => AppFilesCollection,
+      field: "avatarId",
+    },
+  };
+}
+```
+
+```ts
+function uploadAvatarResolver(_, args, ctx) {
+  const s3Upload = ctx.container.get(S3UploadService);
+  const appFile = await uploadService.upload(args.file, {
+    resourceType: "avatar",
+    uploadedById: ctx.userId,
+  });
+
+  const usersCollection = ctx.container.get(UsersCollection);
+  usersCollection.updateOne(
+    { _id: ctx.userId },
+    {
+      $set: {
+        avatarId: appFile._id,
+      },
+    }
+  );
+}
+```
+
+If for example you have a "place" where you upload more files. For example, a `Comment` can contain many pictures. The solution we recommend is creating a conglomerate called `FileGroup` which stores and manages these, and link that fileGroup with the entities you're interested in.
+
+### Removal
+
+Files get deleted when `appFiles` get deleted by `_id`. This is done because of security and performance concerns.
+
+```ts
+appFilesCollection.deleteOne({ _id: mediaId });
+```
+
+This will automatically delete it from the S3 as well. This is handled in `MediaListener` via a `BeforeRemoveEvent` for the documents.
+
+### Downloadable URLs
+
+Using it on the client for fetching the url you just get `fullUrl` from `Media` GraphQL entity. `fullUrl` is an actual reducer that uses `UploadService` to get the url by key. The url is derived from the endpoint variable.
+
+### Customisation
+
+You can create your own S3UploadService if you have special handling for things such as image compression or others:
+
+```ts
+class ImageS3UploadService extends S3UploadService {
+  upload(upload: Promise<Upload>, extension?: Partial<AppFile>) {
+    // Do your own thing
+  }
+}
+```
+
+For thumbnails of images we recommend that you store these files separately in their own `AppFile` and manage them separately.
