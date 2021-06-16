@@ -245,7 +245,7 @@ Deleting a file that it also clears all the file groups containing it. You don't
 
 As a concept, a `File` can belong in multiple `FileGroups`. If, let's say you want in the future to be smart and reuse the files. If you want to remove the file only from a specific file group and not delete it, just run a MongoDB update and use `$pull` on `fileIds` inside `AppFileGroups` collection.
 
-## Customise App Files
+## Customise Collections
 
 If you want to add new files or new things, you can do that by customising your own models
 You can by entering your own custom collection and model:
