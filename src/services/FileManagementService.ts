@@ -19,9 +19,6 @@ export class FileManagementService {
   protected config: AWSS3Config;
   protected s3: S3;
 
-  @Inject(() => S3UploadService)
-  protected s3UploadService: S3UploadService;
-
   @Inject(APP_FILES_COLLECTION_TOKEN)
   protected appFiles: AppFilesCollection;
 
@@ -59,24 +56,6 @@ export class FileManagementService {
    */
   async getFile(fileId: ObjectID): Promise<AppFile> {
     return this.appFiles.findOne({ _id: fileId });
-  }
-
-  /**
-   * Use this method when you easily want to get the downloadable URL of the file.
-   * @param fileId
-   * @returns
-   */
-  async getFileURL(fileId: ObjectID) {
-    const file = await this.appFiles.findOne(
-      { _id: fileId },
-      {
-        projection: {
-          path: 1,
-        },
-      }
-    );
-
-    return this.s3UploadService.getUrl(file.path);
   }
 
   /**

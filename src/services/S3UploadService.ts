@@ -12,6 +12,7 @@ import {
   AWS_MAIN_CONFIG_TOKEN,
   APP_FILES_COLLECTION_TOKEN,
 } from "../constants";
+import { ObjectID } from "@kaviar/mongo-bundle";
 
 export class S3UploadService {
   protected s3: S3;
@@ -111,6 +112,28 @@ export class S3UploadService {
         Key: key,
       })
       .promise();
+  }
+
+  /**
+   * Use this method when you easily want to get the downloadable URL of the file.
+   * @param fileId
+   * @returns
+   */
+  async getFileURL(fileId: ObjectID) {
+    const file = await this.appFiles.findOne(
+      { _id: fileId },
+      {
+        projection: {
+          path: 1,
+        },
+      }
+    );
+
+    if (!file) {
+      throw new Error(`File with id: ${fileId} was not found`);
+    }
+
+    return this.getUrl(file.path);
   }
 
   /**

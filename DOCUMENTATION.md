@@ -63,13 +63,13 @@ async function uploadResolver(_, args, ctx) {
 
 Now, in most cases what interests you is that `downloadable url` so the user can access it. To do this we have the following options.
 
-Through `FileManagementService`:
+Through `S3UploadService`:
 
 ```ts
-import { FileManagementService } from "@kaviar/x-s3-bundle";
+import { S3UploadService } from "@kaviar/x-s3-bundle";
 
-const fileManagementService = ctx.container.get(FileManagementService);
-fileManagementService.getFileURL(appFile._id); // This will return a fully downloadable path
+const s3UploadService = ctx.container.get(S3UploadService);
+s3UploadService.getFileURL(appFile._id); // This will return a fully downloadable path
 ```
 
 Through [Nova](https://www.kaviarjs.com/docs/package-nova):
@@ -265,6 +265,8 @@ kernel.addBundle(
 
 ## Customise Upload Logic
 
+This can be used to either have multiple uploading buckets, either override and customise the logic.
+
 ```ts
 class ImageS3UploadService extends S3UploadService {
   constructor() {
@@ -273,6 +275,17 @@ class ImageS3UploadService extends S3UploadService {
 
   upload(upload: Promise<Upload>, extension?: Partial<AppFile>) {
     // Do your own thing
+    // this.doUpload()
+  }
+
+  public async uploadBuffer(
+    filename: string,
+    mimetype: string,
+    buffer: Buffer,
+    extension?: Partial<AppFile>
+  ): Promise<AppFile> {
+    // upload the file and return an AppFile
+    // you can use this.appFilesCollection
   }
 }
 ```
