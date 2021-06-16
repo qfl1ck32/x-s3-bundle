@@ -24,7 +24,7 @@ kernel.addBundle(
   new XS3Bundle({
     accessKeyId: "xxx",
     secretAccessKey: "xxx",
-    bucket: "xxx",
+    bucket: "xxx",Str
     region: "eu-west-2",
     // used to generate the download path
     endpoint: "https://s3/",

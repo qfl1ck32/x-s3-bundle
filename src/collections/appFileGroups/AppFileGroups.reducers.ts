@@ -1,6 +1,6 @@
 import { ContainerInstance } from "@kaviar/core";
 import { IReducerOption } from "@kaviar/nova";
-import { S3UploadService } from "../services/S3UploadService";
+import { S3UploadService } from "../../services/S3UploadService";
 
 // Export link names as constants with type of: BundleLinkCollectionOption, sample:
 // export const company: IReducerOption = { ... }

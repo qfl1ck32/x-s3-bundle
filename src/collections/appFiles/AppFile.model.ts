@@ -1,5 +1,6 @@
 import { ObjectID } from "@kaviar/mongo-bundle";
 import { IUser } from "@kaviar/security-bundle";
+import { AppFileGroup } from "../appFileGroups/AppFileGroup.model";
 
 export class AppFile {
   _id: ObjectID;
@@ -23,4 +24,7 @@ export class AppFile {
    * @reducer
    */
   downloadUrl: string;
+
+  groupId?: ObjectID;
+  group?: AppFileGroup;
 }

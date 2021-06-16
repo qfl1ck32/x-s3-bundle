@@ -4,7 +4,7 @@ import { Upload } from "graphql-upload";
 import { S3 } from "aws-sdk";
 import * as moment from "moment";
 import { AWSS3Config } from "../defs";
-import { AppFile } from "../collections/AppFile.model";
+import { AppFile } from "../collections/appFiles/AppFile.model";
 import { Inject } from "@kaviar/core";
 import { AppFilesCollection } from "../collections/AppFiles.collection";
 import { ObjectId } from "@kaviar/ejson";
