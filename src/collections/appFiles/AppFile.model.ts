@@ -25,6 +25,5 @@ export class AppFile {
    */
   downloadUrl: string;
 
-  groupId?: ObjectID;
-  group?: AppFileGroup;
+  groups?: AppFileGroup[];
 }

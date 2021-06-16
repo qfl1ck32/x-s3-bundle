@@ -22,65 +22,81 @@ import { XS3Bundle } from "@kaviar/x-s3-bundle";
 
 kernel.addBundle(
   new XS3Bundle({
-    accessKeyId: "xxx",
-    secretAccessKey: "xxx",
-    bucket: "xxx",Str
-    region: "eu-west-2",
-    // used to generate the download path
-    endpoint: "https://s3/",
+    accessKeyId: process.env.AWS_S3_KEY_ID,
+    secretAccessKey: process.env.AWS_S3_SECRET,
+    region: process.env.AWS_S3_REGION,
+    bucket: process.env.AWS_S3_BUCKET,
+    // used to generate the downloadable path, example: https://s3.amazonaws.com/my-bucket
+    endpoint: process.env.AWS_S3_ENDPOINT,
   })
 );
 ```
 
-Or if you have them already in your `.env` files, no need to be specified in bundle configuration when adding it to kernel:
+## Uploading
 
-```ts
-accessKeyId: process.env.AWS_S3_KEY_ID,
-secretAccessKey: process.env.AWS_S3_SECRET,
-endpoint: process.env.AWS_S3_ENDPOINT,
-region: process.env.AWS_S3_REGION,
-bucket: process.env.AWS_S3_BUCKET,
-```
+A good tutorial to show-case the full flow [can be found here](https://www.apollographql.com/blog/graphql/file-uploads/with-react-hooks-typescript-amazon-s3-tutorial/)
 
-### Uploading in Resolvers
+The typical process is that from your client you have added the [Apollo Upload Link](https://github.com/jaydenseric/apollo-upload-client). This is by default included in `x-ui` package so you don't have to worry. What it does is that it transforms the HTTP request into a multi-part form to send the files (if there are any)
 
 ```ts
 import { S3UploadService, AppFilesCollection } from "@kaviar/x-s3-bundle";
 
 const types = `
   type Mutation {
-    upload(file: Upload): Boolean
+    upload(file: Upload!): Boolean
   }
 `;
 
-const resolver = async function (_, args, ctx) {
+async function uploadResolver(_, args, ctx) {
   // The file is the GQL Upload Scalar
   const { file } = args;
 
   const s3UploadService = ctx.container.get(S3UploadService);
+
   const appFile = await s3UploadService.upload(file, {
-    resourceType: "avatar",
     uploadedById: ctx.userId,
   });
 
-  // At this step appFile has been already uploaded to S3. You can fetch the download url:
-  const url = s3UploadService.getUrl(appFile.path);
-
-  // Or via Nova as we have the `downloadUrl` reducer to help you in this regard
-  const appFiles = ctx.container.get(AppFilesCollection);
-  const appFile = appFiles.queryOne({
-    $: {
-      filters: { _id: appFile.id },
-    },
-    name: 1,
-    downloadUrl: 1,
-  });
-};
+  return true;
+}
 ```
 
-## How it works
+Now, in most cases what interests you is that `downloadable url` so the user can access it. To do this we have the following options.
 
-Basically you'll have a bunch of entities linked with files through `Nova` linking with `AppFilesCollection`. For example, an User has an avatar:
+Through `FileManagementService`:
+
+```ts
+import { FileManagementService } from "@kaviar/x-s3-bundle";
+
+const fileManagementService = ctx.container.get(FileManagementService);
+fileManagementService.getFileURL(appFile._id); // This will return a fully downloadable path
+```
+
+Through [Nova](https://www.kaviarjs.com/docs/package-nova):
+
+```ts
+const appFile = appFiles.queryOne({
+  $: {
+    filters: { _id: appFile.id },
+  },
+  name: 1,
+  // This is a reducer that will use the UploadService to give you the url
+  downloadUrl: 1,
+});
+```
+
+## Removing Files
+
+When you remove the file, you would expect that it also gets deleted from the S3 Bucket. You would be correct. If you do:
+
+```ts
+const appFilesCollection = container.get(AppFilesCollection);
+appFilesCollection.deleteOne({ _id: appFile._id }); // deletes it from s3 and from the database
+```
+
+## Real world usage
+
+### Single Uploads Storage
 
 In GraphQL typing it will look something like this:
 
@@ -94,7 +110,8 @@ type User {
 query me {
   avatar {
     """
-    Keep in mind that you should do a Nova query in your resolver if you want this to work as downloadUrl is a reducer.
+    Keep in mind that you should do a Nova query in your "me" resolver if you want this to work as downloadUrl is a reducer.
+    Otherwise, you could write your own field resolver which uses `FileManagementService` to deliver the downloadUrl
     """
     downloadUrl
   }
@@ -109,6 +126,7 @@ import { AppFilesCollection } from "@kaviar/x-s3-bundle";
 // Sample of linking of files
 class UsersCollection extends Collection {
   static links = {
+    //
     avatar: {
       collection: () => AppFilesCollection,
       field: "avatarId",
@@ -117,11 +135,14 @@ class UsersCollection extends Collection {
 }
 ```
 
+A sample resolver how you would update this:
+
 ```ts
-function uploadAvatarResolver(_, args, ctx) {
+async function uploadAvatarResolver(_, args, ctx) {
+  // TODO: check if there is a previous avatar and delete it.
+
   const s3UploadService = ctx.container.get(S3UploadService);
   const appFile = await s3UploadService.upload(args.file, {
-    resourceType: "avatar",
     uploadedById: ctx.userId,
   });
 
@@ -137,19 +158,48 @@ function uploadAvatarResolver(_, args, ctx) {
 }
 ```
 
-If for example you have a "place" where you upload more files. For example, a `Comment` can contain many pictures. The solution we recommend is creating a conglomerate called `FileGroup` which stores and manages these, and link that fileGroup with the entities you're interested in.
+### Multiple Uploads Storage
 
-### Removal
+While the single upload solution is straight forward, there will be a lot of cases in which you want to add many files to your models. For example, a comment can have many pictures, a task can have many attachments, and so on. To aid this we created a separate collection called `AppFileGroups` to aid us:
 
-Files get deleted when `appFiles` get deleted by `_id`. This is done because of security and performance concerns.
+Let's assume we create our task, and we have `fileGroupId` linked with `AppFileGroups` through Nova:
 
 ```ts
-appFilesCollection.deleteOne({ _id: appFileId });
+const fileManagementService = ctx.container.get(FileManagementService);
+const fileGroupId = fileManagementService.newFileGroup(); // This will return a fully downloadable path
+tasksCollection.insertOne({
+  title: "Hello",
+  fileGroupId,
+});
+
+// Now when you do  the upload and you have the file
+const appFile = await s3UploadService.upload(args.file, {
+  uploadedById: ctx.userId,
+});
+
+fileManagementService.addFileToFileGroup(fileGroupId, appFile._id);
+
+// Now you can query it through Nova:
+query = `
+  query {
+    tasks {
+      fileGroup {
+        files {
+          name
+          mimeType
+          downloadUrl
+        }
+      }
+    }
+  }
+`;
 ```
 
-This will automatically delete it from the S3 as well. This is handled in `AppFileListener` via a `BeforeRemoveEvent` for the documents.
+Deleting a file that it also clears all the file groups containing it. You don't have to worry.
 
-### Customisation
+As a concept, a `File` can belong in multiple `FileGroups`. If, let's say you want in the future to be smart and reuse the files. If you want to remove the file only from a specific file group and not delete it, just run a MongoDB update and use `$pull` on `fileIds` inside `AppFileGroups` collection.
+
+## Multi Buckets Handling
 
 You can create your own S3UploadService if you have special handling for things such as image compression or others:
 

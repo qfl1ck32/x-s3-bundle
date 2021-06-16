@@ -3,5 +3,5 @@ import { AppFileGroupsCollection } from "../appFileGroups/AppFileGroups.collecti
 
 export const group: IBundleLinkCollectionOption = {
   collection: () => AppFileGroupsCollection,
-  field: "fileGroupId",
+  inversedBy: "files",
 };

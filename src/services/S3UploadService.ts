@@ -6,29 +6,22 @@ import * as moment from "moment";
 import { AWSS3Config } from "../defs";
 import { AppFile } from "../collections/appFiles/AppFile.model";
 import { Inject } from "@kaviar/core";
-import { AppFilesCollection } from "../collections/AppFiles.collection";
 import { ObjectId } from "@kaviar/ejson";
+import { AppFilesCollection } from "../collections/appFiles/AppFiles.collection";
+import { AWS_MAIN_CONFIG_TOKEN } from "../constants";
 
 export class S3UploadService {
-  protected config: AWSS3Config;
   protected s3: S3;
 
   @Inject(() => AppFilesCollection)
   protected appFiles: AppFilesCollection;
 
-  setConfig(awsConfig: AWSS3Config) {
-    this.config = awsConfig;
-    const { endpoint, ...config } = awsConfig;
-    this.s3 = new S3(config);
-  }
-
-  /**
-   * Returns the upload file for downloading
-   * @param id
-   * @returns
-   */
-  findOneById(id: ObjectId) {
-    return this.appFiles.findOne(id);
+  constructor(
+    @Inject(AWS_MAIN_CONFIG_TOKEN)
+    protected readonly config: AWSS3Config
+  ) {
+    const { endpoint, ...s3Config } = config;
+    this.s3 = new S3(s3Config);
   }
 
   /**
@@ -66,17 +59,30 @@ export class S3UploadService {
     return appFile;
   }
 
-  putObject(fileKey, mimeType, stream): Promise<S3.PutObjectOutput> {
-    const params = {
+  /**
+   * Uploads your buffer/stream to the desired path in S3
+   * @param fileKey
+   * @param mimeType
+   * @param stream
+   * @returns
+   */
+  async putObject(fileKey, mimeType, stream): Promise<S3.PutObjectOutput> {
+    const params: S3.PutObjectRequest = {
       Bucket: this.config.bucket,
       Key: fileKey,
       Body: stream,
       ContentType: mimeType,
       ACL: "public-read",
     };
+
     return this.s3.putObject(params).promise();
   }
 
+  /**
+   * Removes it from S3 deleting it forever
+   * @param key
+   * @returns
+   */
   async remove(key) {
     return this.s3
       .deleteObject({
@@ -86,10 +92,22 @@ export class S3UploadService {
       .promise();
   }
 
+  /**
+   * Returns the downloadable URL for the specified key
+   *
+   * @param key
+   * @returns
+   */
   getUrl(key): string {
     return new URL(key, this.config.endpoint).href;
   }
 
+  /**
+   * Based on file name it can generate a secure upload key
+   * @param filename
+   * @param context
+   * @returns
+   */
   generateKey(filename: string, context = ""): string {
     const dateFolder = `${moment()
       .locale("en")
@@ -106,6 +124,11 @@ export class S3UploadService {
     return `${key}-${filename}`;
   }
 
+  /**
+   * Gets a stream and puts it in the Buffer
+   * @param stream
+   * @returns
+   */
   async streamToBuffer(stream): Promise<Buffer> {
     const buffs = [];
     return new Promise((resolve, reject) =>
