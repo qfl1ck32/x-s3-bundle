@@ -41,6 +41,23 @@ export class S3UploadService {
 
     const buffer = await this.streamToBuffer(stream);
 
+    return this.uploadBuffer(filename, mimetype, buffer, extension);
+  }
+
+  /**
+   * Easy to use method for uploading from a buffer directly
+   * @param filename
+   * @param mimetype
+   * @param buffer
+   * @param extension
+   * @returns
+   */
+  public async uploadBuffer(
+    filename: string,
+    mimetype: string,
+    buffer: Buffer,
+    extension?: Partial<AppFile>
+  ): Promise<AppFile> {
     const id = shortid.generate();
     const fileName = `${id}-${filename}`;
     const fileKey = this.generateKey(fileName);

@@ -85,6 +85,13 @@ const appFile = appFiles.queryOne({
 });
 ```
 
+If you want to upload without `GraphQL`:
+
+```ts
+const s3UploadService = ctx.container.get(S3UploadService);
+const appFile = s3UploadService.uploadBuffer(filename, mimeType, buffer);
+```
+
 ## Removing Files
 
 When you remove the file, you would expect that it also gets deleted from the S3 Bucket. You would be correct. If you do:
@@ -254,4 +261,18 @@ kernel.addBundle(
     appFileGroupsCollection: MyAppFileGroupsCollection,
   })
 );
+```
+
+## Customise Upload Logic
+
+```ts
+class ImageS3UploadService extends S3UploadService {
+  constructor() {
+    super(NEW_AWS_CONFIG);
+  }
+
+  upload(upload: Promise<Upload>, extension?: Partial<AppFile>) {
+    // Do your own thing
+  }
+}
 ```
