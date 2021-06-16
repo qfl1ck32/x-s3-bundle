@@ -13,12 +13,10 @@ import { AWS_MAIN_CONFIG_TOKEN } from "../constants";
 export class S3UploadService {
   protected s3: S3;
 
-  @Inject(() => AppFilesCollection)
-  protected appFiles: AppFilesCollection;
-
   constructor(
     @Inject(AWS_MAIN_CONFIG_TOKEN)
-    protected readonly config: AWSS3Config
+    protected readonly config: AWSS3Config,
+    protected readonly appFiles: AppFilesCollection
   ) {
     const { endpoint, ...s3Config } = config;
     this.s3 = new S3(s3Config);
@@ -98,8 +96,16 @@ export class S3UploadService {
    * @param key
    * @returns
    */
-  getUrl(key): string {
-    return new URL(key, this.config.endpoint).href;
+  getUrl(key: string): string {
+    let urlPath = this.config.endpoint;
+    if (urlPath[urlPath.length - 1] !== "/") {
+      urlPath = urlPath + "/";
+    }
+    if (key[0] === "/") {
+      key = key.slice(1);
+    }
+    // urlPath ends with '/', key surely doesn't
+    return urlPath + key;
   }
 
   /**

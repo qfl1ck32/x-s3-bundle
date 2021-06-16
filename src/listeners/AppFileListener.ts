@@ -9,11 +9,11 @@ export class AppFileListener extends Listener {
   @Inject(() => AppFilesCollection)
   protected appFiles: AppFilesCollection;
 
-  @Inject(() => S3UploadService)
-  protected uploadService: S3UploadService;
-
   @Inject(() => AppFileGroupsCollection)
   protected appFileGroups: AppFileGroupsCollection;
+
+  @Inject(() => S3UploadService)
+  protected uploadService: S3UploadService;
 
   @Inject(() => LoggerService)
   protected logger: LoggerService;
@@ -57,7 +57,7 @@ export class AppFileListener extends Listener {
       },
       {
         $pull: {
-          fileIds: appFile._id,
+          filesIds: appFile._id,
         },
       }
     );

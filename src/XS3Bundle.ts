@@ -1,12 +1,15 @@
 import { Bundle } from "@kaviar/core";
 import { S3BundleConfigType } from "./defs";
 import { S3UploadService } from "./services/S3UploadService";
-import { Loader } from "@kaviar/graphql-bundle";
+import { GraphQLBundle, Loader } from "@kaviar/graphql-bundle";
 import GraphQLAppFile from "./graphql/entities/AppFile.graphql";
 import { AppFileListener } from "./listeners/AppFileListener";
 import { AWS_MAIN_CONFIG_TOKEN } from "./constants";
+import { ApolloBundle } from "@kaviar/apollo-bundle";
 
 export class XS3Bundle extends Bundle<S3BundleConfigType> {
+  dependencies = [ApolloBundle, GraphQLBundle];
+
   defaultConfig = {
     accessKeyId: "",
     secretAccessKey: "",
@@ -15,15 +18,16 @@ export class XS3Bundle extends Bundle<S3BundleConfigType> {
     bucket: "",
   };
 
+  async prepare() {
+    this.container.set(AWS_MAIN_CONFIG_TOKEN, this.config);
+  }
+
   async init() {
     const loader = this.container.get(Loader);
     loader.load({
       typeDefs: GraphQLAppFile,
     });
 
-    this.container.set(AWS_MAIN_CONFIG_TOKEN, this.config);
-    const service = this.container.get(S3UploadService);
-
-    this.warmup([AppFileListener]);
+    this.warmup([AppFileListener, S3UploadService]);
   }
 }
