@@ -99,7 +99,7 @@ export class S3UploadService {
    * @returns
    */
   getUrl(key): string {
-    return new URL(key, this.config.endpoint).href;
+    return new URL(key, this.config.endpoint.concat("/")).href;
   }
 
   /**
