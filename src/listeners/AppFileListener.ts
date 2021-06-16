@@ -3,13 +3,17 @@ import { LoggerService } from "@kaviar/logger-bundle";
 import { BeforeRemoveEvent } from "@kaviar/mongo-bundle";
 import { AppFileGroupsCollection } from "../collections/appFileGroups/AppFileGroups.collection";
 import { AppFilesCollection } from "../collections/appFiles/AppFiles.collection";
+import {
+  APP_FILES_COLLECTION_TOKEN,
+  APP_FILE_GROUPS_COLLECTION_TOKEN,
+} from "../constants";
 import { S3UploadService } from "../services/S3UploadService";
 
 export class AppFileListener extends Listener {
-  @Inject(() => AppFilesCollection)
+  @Inject(APP_FILES_COLLECTION_TOKEN)
   protected appFiles: AppFilesCollection;
 
-  @Inject(() => AppFileGroupsCollection)
+  @Inject(APP_FILE_GROUPS_COLLECTION_TOKEN)
   protected appFileGroups: AppFileGroupsCollection;
 
   @Inject(() => S3UploadService)

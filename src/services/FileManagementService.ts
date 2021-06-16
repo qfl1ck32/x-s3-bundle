@@ -10,6 +10,10 @@ import { AppFileGroupsCollection } from "../collections/appFileGroups/AppFileGro
 import { AppFilesCollection } from "../collections/appFiles/AppFiles.collection";
 import { ObjectID } from "@kaviar/mongo-bundle";
 import { S3UploadService } from "./S3UploadService";
+import {
+  APP_FILES_COLLECTION_TOKEN,
+  APP_FILE_GROUPS_COLLECTION_TOKEN,
+} from "../constants";
 
 export class FileManagementService {
   protected config: AWSS3Config;
@@ -18,10 +22,10 @@ export class FileManagementService {
   @Inject(() => S3UploadService)
   protected s3UploadService: S3UploadService;
 
-  @Inject(() => AppFilesCollection)
+  @Inject(APP_FILES_COLLECTION_TOKEN)
   protected appFiles: AppFilesCollection;
 
-  @Inject(() => AppFileGroupsCollection)
+  @Inject(APP_FILE_GROUPS_COLLECTION_TOKEN)
   protected appFileGroups: AppFileGroupsCollection;
 
   /**

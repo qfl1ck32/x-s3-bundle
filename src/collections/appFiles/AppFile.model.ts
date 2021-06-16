@@ -26,4 +26,6 @@ export class AppFile {
   downloadUrl: string;
 
   groups?: AppFileGroup[];
+  createdAt: Date;
+  updatedAt: Date;
 }

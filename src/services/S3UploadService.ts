@@ -8,15 +8,20 @@ import { AppFile } from "../collections/appFiles/AppFile.model";
 import { Inject } from "@kaviar/core";
 import { ObjectId } from "@kaviar/ejson";
 import { AppFilesCollection } from "../collections/appFiles/AppFiles.collection";
-import { AWS_MAIN_CONFIG_TOKEN } from "../constants";
+import {
+  AWS_MAIN_CONFIG_TOKEN,
+  APP_FILES_COLLECTION_TOKEN,
+} from "../constants";
 
 export class S3UploadService {
   protected s3: S3;
 
+  @Inject(APP_FILES_COLLECTION_TOKEN)
+  protected readonly appFiles: AppFilesCollection;
+
   constructor(
     @Inject(AWS_MAIN_CONFIG_TOKEN)
-    protected readonly config: AWSS3Config,
-    protected readonly appFiles: AppFilesCollection
+    protected readonly config: AWSS3Config
   ) {
     const { endpoint, ...s3Config } = config;
     this.s3 = new S3(s3Config);
@@ -35,6 +40,7 @@ export class S3UploadService {
     const stream = createReadStream();
 
     const buffer = await this.streamToBuffer(stream);
+
     const id = shortid.generate();
     const fileName = `${id}-${filename}`;
     const fileKey = this.generateKey(fileName);

@@ -10,5 +10,5 @@ export class AppFilesCollection extends Collection<AppFile> {
   static reducers = reducers;
   static links = links;
 
-  static behaviors = [Behaviors.Timestampable(), Behaviors.Blameable()];
+  static behaviors = [Behaviors.Timestampable()];
 }

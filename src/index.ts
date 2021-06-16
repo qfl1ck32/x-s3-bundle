@@ -8,3 +8,5 @@ export * from "./collections/appFileGroups/AppFileGroups.collection";
 export * from "./collections/appFileGroups/AppFileGroup.model";
 
 export * from "./XS3Bundle";
+export * from "./constants";
+export * from "./defs";

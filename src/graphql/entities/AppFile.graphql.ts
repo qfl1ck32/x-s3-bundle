@@ -15,7 +15,5 @@ export default /* GraphQL */ `
 
     createdAt: Date
     updatedAt: Date
-    createdBy: User
-    updatedBy: User
   }
 `;

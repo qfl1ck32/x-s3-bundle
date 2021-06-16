@@ -94,6 +94,45 @@ const appFilesCollection = container.get(AppFilesCollection);
 appFilesCollection.deleteOne({ _id: appFile._id }); // deletes it from s3 and from the database
 ```
 
+## Data Models
+
+```ts
+export class AppFileGroup {
+  _id: ObjectID;
+  name?: string;
+  files: AppFile[];
+  filesIds: ObjectID[];
+}
+
+export class AppFile {
+  _id: ObjectID;
+  name: string;
+  path: string;
+  size: number;
+  mimeType: string;
+
+  metadata: object;
+
+  /**
+   * To have a generic way of linking data
+   */
+  resourceId?: ObjectID;
+  resourceType?: string;
+
+  uploadedBy?: IUser;
+  uploadedById?: ObjectID;
+
+  /**
+   * @reducer
+   */
+  downloadUrl: string;
+
+  groups?: AppFileGroup[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ## Real world usage
 
 ### Single Uploads Storage
@@ -199,16 +238,20 @@ Deleting a file that it also clears all the file groups containing it. You don't
 
 As a concept, a `File` can belong in multiple `FileGroups`. If, let's say you want in the future to be smart and reuse the files. If you want to remove the file only from a specific file group and not delete it, just run a MongoDB update and use `$pull` on `fileIds` inside `AppFileGroups` collection.
 
-## Multi Buckets Handling
+## Customise App Files
 
-You can create your own S3UploadService if you have special handling for things such as image compression or others:
+If you want to add new files or new things, you can do that by customising your own models
+You can by entering your own custom collection and model:
 
 ```ts
-class ImageS3UploadService extends S3UploadService {
-  upload(upload: Promise<Upload>, extension?: Partial<AppFile>) {
-    // Do your own thing
-  }
-}
-```
+class MyAppFilesCollection extends AppFilesCollection<MyAppFileModel> {}
+class MyAppFileGroupsCollection extends MyAppFileGroupsCollection<MyAppFileGroupModel> {}
 
-For thumbnails of images we recommend that you store these files separately in their own `AppFile` and manage them separately.
+kernel.addBundle(
+  new XS3Bundle({
+    // the rest
+    appFilesCollection: MyAppFilesCollection,
+    appFileGroupsCollection: MyAppFileGroupsCollection,
+  })
+);
+```
