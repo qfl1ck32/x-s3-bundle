@@ -1,6 +1,6 @@
 import * as shortid from "shortid";
 import { URL } from "url";
-import { Upload } from "graphql-upload";
+import { FileUpload } from "graphql-upload";
 import { S3 } from "aws-sdk";
 import * as moment from "moment";
 import { AWSS3Config } from "../defs";
@@ -34,7 +34,7 @@ export class S3UploadService {
    * @returns
    */
   async upload(
-    upload: Promise<Upload>,
+    upload: Promise<FileUpload>,
     extension?: Partial<AppFile>
   ): Promise<AppFile> {
     const { createReadStream, filename, mimetype } = await upload;
