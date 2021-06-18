@@ -42,11 +42,14 @@ export class FileManagementService {
    * @param fileId
    */
   async addFileToFileGroup(fileGroupId: ObjectID, fileId: ObjectID) {
-    await this.appFileGroups.updateOne(fileGroupId, {
-      $addToSet: {
-        filesIds: fileId,
-      },
-    });
+    await this.appFileGroups.updateOne(
+      { _id: fileGroupId },
+      {
+        $addToSet: {
+          filesIds: fileId,
+        },
+      }
+    );
   }
 
   /**
